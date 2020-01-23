@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                 #-}
+{-# LANGUAGE DefaultSignatures   #-}
 {-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE RankNTypes          #-}
@@ -156,6 +157,11 @@ class GEq f where
     --
     -- (Making use of the 'DSum' type from <https://hackage.haskell.org/package/dependent-sum/docs/Data-Dependent-Sum.html Data.Dependent.Sum> in both examples)
     geq :: f a -> f b -> Maybe (a :~: b)
+    default geq :: GCompare f => f a -> f b -> Maybe (a :~: b)
+    geq a b = case gcompare a b of
+      GEQ -> Just Refl
+      _ -> Nothing
+
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default
 -- implementation of '(==)'.
