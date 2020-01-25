@@ -159,8 +159,8 @@ class GEq f where
     geq :: f a -> f b -> Maybe (a :~: b)
     default geq :: GCompare f => f a -> f b -> Maybe (a :~: b)
     geq a b = case gcompare a b of
-      GEQ -> Just Refl
-      _ -> Nothing
+        GEQ -> Just Refl
+        _   -> Nothing
 
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default
