@@ -4,6 +4,9 @@
 #endif
 {-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE GADTs               #-}
+#if __GLASGOW_HASKELL__ >= 806
+{-# LANGUAGE QuantifiedConstraints #-}
+#endif
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
@@ -46,10 +49,16 @@ import qualified Type.Reflection    as TR
 -- to write (or derive) an @instance Show (T a)@, and then simply say:
 --
 -- > instance GShow t where gshowsPrec = showsPrec
-class GShow t where
+class
+#if __GLASGOW_HASKELL__ >= 806
+  (forall a. Show (t a)) =>
+#endif
+  GShow t where
     gshowsPrec :: Int -> t a -> ShowS
 #if __GLASGOW_HASKELL__ >= 702
+# if __GLASGOW_HASKELL__ < 806
     default gshowsPrec :: Show (t a) => Int -> t a -> ShowS
+# endif
     gshowsPrec = showsPrec
 #endif
 
@@ -70,14 +79,24 @@ instance GShow TR.TypeRep where
 --
 -- | >>> gshow (InL Refl :: Sum ((:~:) Int) ((:~:) Bool) Int)
 -- "InL Refl"
-instance (GShow a, GShow b) => GShow (Sum a b) where
+instance ( GShow a, GShow b
+#if __GLASGOW_HASKELL__ >= 806
+         , forall x. Show (a x)
+         , forall x. Show (b x)
+#endif
+         ) => GShow (Sum a b) where
     gshowsPrec d = \s -> case s of
         InL x -> showParen (d > 10) (showString "InL " . gshowsPrec 11 x)
         InR x -> showParen (d > 10) (showString "InR " . gshowsPrec 11 x)
 
 -- | >>> gshow (Pair Refl Refl :: Product ((:~:) Int) ((:~:) Int) Int)
 -- "Pair Refl Refl"
-instance (GShow a, GShow b) => GShow (Product a b) where
+instance ( GShow a, GShow b
+#if __GLASGOW_HASKELL__ >= 806
+         , forall x. Show (a x)
+         , forall x. Show (b x)
+#endif
+         ) => GShow (Product a b) where
     gshowsPrec d (Pair x y) = showParen (d > 10)
         $ showString "Pair "
         . gshowsPrec 11 x
