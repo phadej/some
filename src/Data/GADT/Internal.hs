@@ -1,4 +1,7 @@
 {-# LANGUAGE CPP                 #-}
+#if __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE DefaultSignatures   #-}
+#endif
 {-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE RankNTypes          #-}
@@ -45,6 +48,10 @@ import qualified Type.Reflection    as TR
 -- > instance GShow t where gshowsPrec = showsPrec
 class GShow t where
     gshowsPrec :: Int -> t a -> ShowS
+#if __GLASGOW_HASKELL__ >= 702
+    default gshowsPrec :: Show (t a) => Int -> t a -> ShowS
+    gshowsPrec = showsPrec
+#endif
 
 gshows :: GShow t => t a -> ShowS
 gshows = gshowsPrec (-1)
@@ -156,6 +163,13 @@ class GEq f where
     --
     -- (Making use of the 'DSum' type from <https://hackage.haskell.org/package/dependent-sum/docs/Data-Dependent-Sum.html Data.Dependent.Sum> in both examples)
     geq :: f a -> f b -> Maybe (a :~: b)
+#if __GLASGOW_HASKELL__ >= 702
+    default geq :: GCompare f => f a -> f b -> Maybe (a :~: b)
+    geq a b = case gcompare a b of
+        GEQ -> Just Refl
+        _   -> Nothing
+#endif
+
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default
 -- implementation of '(==)'.
